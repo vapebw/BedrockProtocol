@@ -50,16 +50,23 @@ class SetActorDataPacket extends DataPacket implements ClientboundPacket, Server
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
 		$this->metadata = CommonTypes::getEntityMetadata($in);
-		$this->syncedProperties = PropertySyncData::read($in);
+		if($this->protocolId >= 975){
+			$this->syncedProperties = PropertySyncData::read($in);
+		}else{
+			$this->syncedProperties = new PropertySyncData([], []);
+		}
 		$this->tick = VarInt::readUnsignedLong($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
 		CommonTypes::putEntityMetadata($out, $this->metadata);
-		$this->syncedProperties->write($out);
+		if($this->protocolId >= 975){
+			$this->syncedProperties->write($out);
+		}
 		VarInt::writeUnsignedLong($out, $this->tick);
 	}
+
 
 	public function handle(PacketHandlerInterface $handler) : bool{
 		return $handler->handleSetActorData($this);

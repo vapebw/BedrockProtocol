@@ -35,10 +35,12 @@ final class ProtocolInfo{
 	public const CURRENT_PROTOCOL = 975;
 
 	public const PROTOCOL_1_26_10 = 944;
+	public const PROTOCOL_1_16_100 = 419;
 
 	public const ACCEPTED_PROTOCOL = [
 		self::CURRENT_PROTOCOL,
 		self::PROTOCOL_1_26_10,
+		self::PROTOCOL_1_16_100,
 	];
 
 	/** Display version shown in the server logs. This should match the version on the game's home screen. */
