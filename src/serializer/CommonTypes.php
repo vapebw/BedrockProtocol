@@ -67,6 +67,7 @@ use function strrev;
 use function substr;
 
 final class CommonTypes{
+	public static bool $useUnsignedY = false;
 
 	private function __construct(){
 		//NOOP
@@ -472,7 +473,11 @@ final class CommonTypes{
 	 */
 	public static function getBlockPosition(ByteBufferReader $in) : BlockPosition{
 		$x = VarInt::readSignedInt($in);
-		$y = VarInt::readSignedInt($in);
+		if(self::$useUnsignedY){
+			$y = \pocketmine\utils\Binary::signInt(VarInt::readUnsignedInt($in));
+		}else{
+			$y = VarInt::readSignedInt($in);
+		}
 		$z = VarInt::readSignedInt($in);
 		return new BlockPosition($x, $y, $z);
 	}
@@ -482,7 +487,11 @@ final class CommonTypes{
 	 */
 	public static function putBlockPosition(ByteBufferWriter $out, BlockPosition $blockPosition) : void{
 		VarInt::writeSignedInt($out, $blockPosition->getX());
-		VarInt::writeSignedInt($out, $blockPosition->getY());
+		if(self::$useUnsignedY){
+			VarInt::writeUnsignedInt($out, \pocketmine\utils\Binary::unsignInt($blockPosition->getY()));
+		}else{
+			VarInt::writeSignedInt($out, $blockPosition->getY());
+		}
 		VarInt::writeSignedInt($out, $blockPosition->getZ());
 	}
 
