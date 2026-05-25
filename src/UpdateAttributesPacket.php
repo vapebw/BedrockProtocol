@@ -43,8 +43,20 @@ class UpdateAttributesPacket extends DataPacket implements ClientboundPacket{
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
-		for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
-			$this->entries[] = UpdateAttribute::read($in);
+		$len = VarInt::readUnsignedInt($in);
+		if($this->protocolId === 419){
+			for($i = 0; $i < $len; ++$i){
+				$min = LE::readFloat($in);
+				$max = LE::readFloat($in);
+				$current = LE::readFloat($in);
+				$default = LE::readFloat($in);
+				$id = CommonTypes::getString($in);
+				$this->entries[] = new \pocketmine\network\mcpe\protocol\types\entity\UpdateAttribute($id, $min, $max, $current, $min, $max, $default, []);
+			}
+		}else{
+			for($i = 0; $i < $len; ++$i){
+				$this->entries[] = \pocketmine\network\mcpe\protocol\types\entity\UpdateAttribute::read($in);
+			}
 		}
 		$this->tick = VarInt::readUnsignedLong($in);
 	}
@@ -52,8 +64,18 @@ class UpdateAttributesPacket extends DataPacket implements ClientboundPacket{
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
 		VarInt::writeUnsignedInt($out, count($this->entries));
-		foreach($this->entries as $entry){
-			$entry->write($out);
+		if($this->protocolId === 419){
+			foreach($this->entries as $entry){
+				LE::writeFloat($out, $entry->getMin());
+				LE::writeFloat($out, $entry->getMax());
+				LE::writeFloat($out, $entry->getCurrent());
+				LE::writeFloat($out, $entry->getDefault());
+				CommonTypes::putString($out, $entry->getId());
+			}
+		}else{
+			foreach($this->entries as $entry){
+				$entry->write($out);
+			}
 		}
 		VarInt::writeUnsignedLong($out, $this->tick);
 	}
