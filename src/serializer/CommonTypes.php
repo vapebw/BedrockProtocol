@@ -294,6 +294,9 @@ final class CommonTypes{
 	 * @throws DataDecodeException
 	 */
 	public static function getItemStackWithoutStackId(ByteBufferReader $in) : ItemStack{
+		if(self::$useUnsignedY){
+			return \pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::readSlot($in);
+		}
 		[$id, $count, $meta] = self::getItemStackHeader($in);
 
 		return $id !== 0 ? self::getItemStackFooter($in, $id, $meta, $count) : ItemStack::null();
@@ -301,6 +304,10 @@ final class CommonTypes{
 	}
 
 	public static function putItemStackWithoutStackId(ByteBufferWriter $out, ItemStack $itemStack) : void{
+		if(self::$useUnsignedY){
+			\pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::writeSlot($out, $itemStack);
+			return;
+		}
 		if(self::putItemStackHeader($out, $itemStack)){
 			self::putItemStackFooter($out, $itemStack);
 		}
@@ -308,6 +315,9 @@ final class CommonTypes{
 
 	/** @throws DataDecodeException */
 	public static function getItemStackWrapper(ByteBufferReader $in) : ItemStackWrapper{
+		if(self::$useUnsignedY){
+			return new ItemStackWrapper(0, \pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::readSlot($in));
+		}
 		[$id, $count, $meta] = self::getItemStackHeader($in);
 		if($id === 0){
 			return new ItemStackWrapper(0, ItemStack::null());
@@ -322,6 +332,10 @@ final class CommonTypes{
 	}
 
 	public static function putItemStackWrapper(ByteBufferWriter $out, ItemStackWrapper $itemStackWrapper) : void{
+		if(self::$useUnsignedY){
+			\pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::writeSlot($out, $itemStackWrapper->getItemStack());
+			return;
+		}
 		$itemStack = $itemStackWrapper->getItemStack();
 		if(self::putItemStackHeader($out, $itemStack)){
 			$hasNetId = $itemStackWrapper->getStackId() !== 0;
@@ -371,6 +385,15 @@ final class CommonTypes{
 
 	/** @throws DataDecodeException */
 	public static function getRecipeIngredient(ByteBufferReader $in) : RecipeIngredient{
+		if(self::$useUnsignedY){
+			$id = VarInt::readSignedInt($in);
+			if($id === 0){
+				return new RecipeIngredient(null, 0);
+			}
+			$meta = VarInt::readSignedInt($in);
+			$count = VarInt::readSignedInt($in);
+			return new RecipeIngredient(new IntIdMetaItemDescriptor($id, $meta), $count);
+		}
 		$descriptorType = Byte::readUnsigned($in);
 		$descriptor = match($descriptorType){
 			ItemDescriptorType::INT_ID_META => IntIdMetaItemDescriptor::read($in),
@@ -386,6 +409,22 @@ final class CommonTypes{
 	}
 
 	public static function putRecipeIngredient(ByteBufferWriter $out, RecipeIngredient $ingredient) : void{
+		if(self::$useUnsignedY){
+			$descriptor = $ingredient->getDescriptor();
+			if($descriptor === null){
+				VarInt::writeSignedInt($out, 0);
+				return;
+			}
+			if($descriptor instanceof IntIdMetaItemDescriptor){
+				VarInt::writeSignedInt($out, $descriptor->getId());
+				VarInt::writeSignedInt($out, $descriptor->getMeta());
+			}else{
+				VarInt::writeSignedInt($out, 0);
+				return;
+			}
+			VarInt::writeSignedInt($out, $ingredient->getCount());
+			return;
+		}
 		$type = $ingredient->getDescriptor();
 
 		Byte::writeUnsigned($out, $type?->getTypeId() ?? 0);

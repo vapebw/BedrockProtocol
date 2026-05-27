@@ -70,7 +70,7 @@ final class v419PacketSerializer{
 		}
 		$extraData->write($extraWriter);
 
-		return new ItemStack($id, $meta, $count, 0, $extraWriter->toString());
+		return new ItemStack($id, $meta, $count, 0, $extraWriter->getData());
 	}
 
 	public static function writeSlot(ByteBufferWriter $out, ItemStack $item) : void{
