@@ -195,10 +195,9 @@ class v419StartGamePacket extends StartGamePacket implements ClientboundPacket{
 
 		$palette = $this->blockPalette;
 		VarInt::writeUnsignedInt($out, count($palette));
-		$nbtWriter = new NetworkNbtSerializer();
 		foreach($palette as $entry){
 			CommonTypes::putString($out, $entry->getName());
-			$out->writeByteArray($nbtWriter->write(new TreeRoot($entry->getStates()->mustGetCompoundTag())));
+			$out->writeByteArray($entry->getStates()->getEncodedNbt());
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->itemTable));
