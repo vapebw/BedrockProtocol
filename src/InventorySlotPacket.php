@@ -47,7 +47,9 @@ class InventorySlotPacket extends DataPacket implements ClientboundPacket{
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->windowId = VarInt::readUnsignedInt($in);
 		$this->inventorySlot = VarInt::readUnsignedInt($in);
-		if($this->protocolId >= 975){
+		if($this->protocolId === 419){
+			$this->item = CommonTypes::getItemStackWrapper($in);
+		}elseif($this->protocolId >= 975){
 			$this->containerName = CommonTypes::readOptional($in, FullContainerName::read(...));
 			$this->storage = CommonTypes::readOptional($in, CommonTypes::getNetworkItemStackDescriptor(...));
 			$this->item = CommonTypes::getNetworkItemStackDescriptor($in);
@@ -61,7 +63,9 @@ class InventorySlotPacket extends DataPacket implements ClientboundPacket{
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		VarInt::writeUnsignedInt($out, $this->windowId);
 		VarInt::writeUnsignedInt($out, $this->inventorySlot);
-		if($this->protocolId >= 975){
+		if($this->protocolId === 419){
+			CommonTypes::putItemStackWrapper($out, $this->item);
+		}elseif($this->protocolId >= 975){
 			CommonTypes::writeOptional($out, $this->containerName, fn(ByteBufferWriter $out, FullContainerName $v) => $v->write($out));
 			CommonTypes::writeOptional($out, $this->storage, CommonTypes::putNetworkItemStackDescriptor(...));
 			CommonTypes::putNetworkItemStackDescriptor($out, $this->item);

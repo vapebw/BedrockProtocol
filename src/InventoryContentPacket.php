@@ -28,14 +28,14 @@ class InventoryContentPacket extends DataPacket implements ClientboundPacket{
 	public int $windowId;
 	/** @var ItemStackWrapper[] */
 	public array $items = [];
-	public FullContainerName $containerName;
-	public ItemStackWrapper $storage;
+	public ?FullContainerName $containerName = null;
+	public ?ItemStackWrapper $storage = null;
 
 	/**
 	 * @generate-create-func
 	 * @param ItemStackWrapper[] $items
 	 */
-	public static function create(int $windowId, array $items, FullContainerName $containerName, ItemStackWrapper $storage) : self{
+	public static function create(int $windowId, array $items, ?FullContainerName $containerName, ?ItemStackWrapper $storage) : self{
 		$result = new self;
 		$result->windowId = $windowId;
 		$result->items = $items;
@@ -50,8 +50,10 @@ class InventoryContentPacket extends DataPacket implements ClientboundPacket{
 		for($i = 0; $i < $count; ++$i){
 			$this->items[] = CommonTypes::getItemStackWrapper($in);
 		}
-		$this->containerName = FullContainerName::read($in);
-		$this->storage = CommonTypes::getItemStackWrapper($in);
+		if($this->protocolId !== 419){
+			$this->containerName = FullContainerName::read($in);
+			$this->storage = CommonTypes::getItemStackWrapper($in);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -60,8 +62,10 @@ class InventoryContentPacket extends DataPacket implements ClientboundPacket{
 		foreach($this->items as $item){
 			CommonTypes::putItemStackWrapper($out, $item);
 		}
-		$this->containerName->write($out);
-		CommonTypes::putItemStackWrapper($out, $this->storage);
+		if($this->protocolId !== 419){
+			($this->containerName ?? new FullContainerName(0))->write($out);
+			CommonTypes::putItemStackWrapper($out, $this->storage ?? new ItemStackWrapper(0, ItemStack::null()));
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
