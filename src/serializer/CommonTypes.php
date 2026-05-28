@@ -316,7 +316,8 @@ final class CommonTypes{
 	/** @throws DataDecodeException */
 	public static function getItemStackWrapper(ByteBufferReader $in) : ItemStackWrapper{
 		if(self::$useUnsignedY){
-			return new ItemStackWrapper(0, \pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::readSlot($in));
+			$stackId = VarInt::readSignedInt($in);
+			return new ItemStackWrapper($stackId, \pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::readSlot($in));
 		}
 		[$id, $count, $meta] = self::getItemStackHeader($in);
 		if($id === 0){
@@ -333,6 +334,7 @@ final class CommonTypes{
 
 	public static function putItemStackWrapper(ByteBufferWriter $out, ItemStackWrapper $itemStackWrapper) : void{
 		if(self::$useUnsignedY){
+			VarInt::writeSignedInt($out, $itemStackWrapper->getStackId());
 			\pocketmine\network\mcpe\protocol\proto\v419\v419PacketSerializer::writeSlot($out, $itemStackWrapper->getItemStack());
 			return;
 		}
