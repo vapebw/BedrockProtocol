@@ -165,7 +165,7 @@ class v419StartGamePacket extends StartGamePacket implements ClientboundPacket{
 		CommonTypes::putString($out, $this->worldName);
 		CommonTypes::putString($out, $this->premiumWorldTemplateId);
 		CommonTypes::putBool($out, $this->isTrial);
-		VarInt::writeSignedInt($out, $this->playerMovementSettings->getMovementType());
+		VarInt::writeSignedInt($out, 2);
 		LE::writeSignedLong($out, $this->currentTick);
 		VarInt::writeSignedInt($out, $this->enchantmentSeed);
 
