@@ -103,7 +103,7 @@ class AddPlayerPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		if($this->protocolId === 419){
+		if($this->protocolId === ProtocolInfo::PROTOCOL_1_16_100){
 			$this->uuid = CommonTypes::getUUID($in);
 			$this->username = CommonTypes::getString($in);
 			$targetActorUniqueId = CommonTypes::getActorUniqueId($in);
@@ -168,7 +168,7 @@ class AddPlayerPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		if($this->protocolId === 419){
+		if($this->protocolId === ProtocolInfo::PROTOCOL_1_16_100){
 			$data = $this->abilitiesPacket->getData();
 			CommonTypes::putUUID($out, $this->uuid);
 			CommonTypes::putString($out, $this->username);
