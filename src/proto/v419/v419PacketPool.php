@@ -10,6 +10,7 @@ use pocketmine\network\mcpe\protocol\proto\v419\packets\v419AvailableCommandsPac
 use pocketmine\network\mcpe\protocol\proto\v419\packets\v419CreativeContentPacket;
 use pocketmine\network\mcpe\protocol\proto\v419\packets\v419InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\proto\v419\packets\v419StartGamePacket;
+use pocketmine\network\mcpe\protocol\proto\v419\packets\v419TickSyncPacket;
 
 class v419PacketPool extends PacketPool{
 
@@ -21,6 +22,7 @@ class v419PacketPool extends PacketPool{
 		$this->registerPacket(new v419AvailableCommandsPacket());
 		$this->registerPacket(new v419AdventureSettingsPacket());
 		$this->registerPacket(new v419CreativeContentPacket());
+		$this->registerPacket(new v419TickSyncPacket());
 	}
 }
 
