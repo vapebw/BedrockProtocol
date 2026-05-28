@@ -71,7 +71,11 @@ class LevelSoundEventPacket extends DataPacket implements ClientboundPacket, Ser
 		$this->entityType = CommonTypes::getString($in);
 		$this->isBabyMob = CommonTypes::getBool($in);
 		$this->disableRelativeVolume = CommonTypes::getBool($in);
-		$this->actorUniqueId = LE::readSignedLong($in); //WHY IS THIS NON-STANDARD?
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			$this->actorUniqueId = LE::readSignedLong($in);
+		}else{
+			$this->actorUniqueId = -1;
+		}
 		if($this->protocolId >= 975){
 			$this->firePosition = CommonTypes::readOptional($in, CommonTypes::getVector3(...));
 		}
@@ -84,7 +88,9 @@ class LevelSoundEventPacket extends DataPacket implements ClientboundPacket, Ser
 		CommonTypes::putString($out, $this->entityType);
 		CommonTypes::putBool($out, $this->isBabyMob);
 		CommonTypes::putBool($out, $this->disableRelativeVolume);
-		LE::writeSignedLong($out, $this->actorUniqueId);
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			LE::writeSignedLong($out, $this->actorUniqueId);
+		}
 		if($this->protocolId >= 975){
 			CommonTypes::writeOptional($out, $this->firePosition, CommonTypes::putVector3(...));
 		}

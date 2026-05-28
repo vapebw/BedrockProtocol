@@ -68,6 +68,9 @@ use function substr;
 
 final class CommonTypes{
 	public static bool $useUnsignedY = false;
+	public static bool $legacy419ItemStackRequestFormat = false;
+	public static bool $legacy419CraftingStackRequestFormat = false;
+	public static bool $legacy419ContainerNameFormat = false;
 
 	private function __construct(){
 		//NOOP

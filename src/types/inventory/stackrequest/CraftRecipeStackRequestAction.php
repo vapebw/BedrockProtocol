@@ -39,12 +39,14 @@ final class CraftRecipeStackRequestAction extends ItemStackRequestAction{
 
 	public static function read(ByteBufferReader $in) : self{
 		$recipeId = CommonTypes::readRecipeNetId($in);
-		$repetitions = Byte::readUnsigned($in);
+		$repetitions = !CommonTypes::$legacy419CraftingStackRequestFormat ? Byte::readUnsigned($in) : 0;
 		return new self($recipeId, $repetitions);
 	}
 
 	public function write(ByteBufferWriter $out) : void{
 		CommonTypes::writeRecipeNetId($out, $this->recipeId);
-		Byte::writeUnsigned($out, $this->repetitions);
+		if(!CommonTypes::$legacy419CraftingStackRequestFormat){
+			Byte::writeUnsigned($out, $this->repetitions);
+		}
 	}
 }

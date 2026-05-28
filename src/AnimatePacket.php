@@ -44,17 +44,33 @@ class AnimatePacket extends DataPacket implements ClientboundPacket, Serverbound
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->action = Byte::readUnsigned($in);
-		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
-		$this->data = LE::readFloat($in);
-		$this->swingSource = CommonTypes::readOptional($in, CommonTypes::getString(...));
+		if($this->protocolId === ProtocolInfo::PROTOCOL_1_16_100){
+			$this->action = \pmmp\encoding\VarInt::readSignedInt($in);
+			$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
+			if($this->action === 128 || $this->action === 129){
+				$this->data = LE::readFloat($in);
+			}
+		}else{
+			$this->action = Byte::readUnsigned($in);
+			$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
+			$this->data = LE::readFloat($in);
+			$this->swingSource = CommonTypes::readOptional($in, CommonTypes::getString(...));
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		Byte::writeUnsigned($out, $this->action);
-		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
-		LE::writeFloat($out, $this->data);
-		CommonTypes::writeOptional($out, $this->swingSource, CommonTypes::putString(...));
+		if($this->protocolId === ProtocolInfo::PROTOCOL_1_16_100){
+			\pmmp\encoding\VarInt::writeSignedInt($out, $this->action);
+			CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
+			if($this->action === 128 || $this->action === 129){
+				LE::writeFloat($out, $this->data);
+			}
+		}else{
+			Byte::writeUnsigned($out, $this->action);
+			CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
+			LE::writeFloat($out, $this->data);
+			CommonTypes::writeOptional($out, $this->swingSource, CommonTypes::putString(...));
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

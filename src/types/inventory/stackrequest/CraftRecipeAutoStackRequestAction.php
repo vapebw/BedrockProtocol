@@ -56,22 +56,30 @@ final class CraftRecipeAutoStackRequestAction extends ItemStackRequestAction{
 
 	public static function read(ByteBufferReader $in) : self{
 		$recipeId = CommonTypes::readRecipeNetId($in);
-		$repetitions = Byte::readUnsigned($in);
-		$repetitions2 = Byte::readUnsigned($in); //repetitions property is sent twice, mojang...
-		$ingredients = [];
-		for($i = 0, $count = Byte::readUnsigned($in); $i < $count; ++$i){
-			$ingredients[] = CommonTypes::getRecipeIngredient($in);
+		if(!CommonTypes::$legacy419CraftingStackRequestFormat){
+			$repetitions = Byte::readUnsigned($in);
+			$repetitions2 = Byte::readUnsigned($in);
+			$ingredients = [];
+			for($i = 0, $count = Byte::readUnsigned($in); $i < $count; ++$i){
+				$ingredients[] = CommonTypes::getRecipeIngredient($in);
+			}
+		}else{
+			$repetitions = 0;
+			$repetitions2 = 0;
+			$ingredients = [];
 		}
 		return new self($recipeId, $repetitions, $repetitions2, $ingredients);
 	}
 
 	public function write(ByteBufferWriter $out) : void{
 		CommonTypes::writeRecipeNetId($out, $this->recipeId);
-		Byte::writeUnsigned($out, $this->repetitions);
-		Byte::writeUnsigned($out, $this->repetitions2);
-		Byte::writeUnsigned($out, count($this->ingredients));
-		foreach($this->ingredients as $ingredient){
-			CommonTypes::putRecipeIngredient($out, $ingredient);
+		if(!CommonTypes::$legacy419CraftingStackRequestFormat){
+			Byte::writeUnsigned($out, $this->repetitions);
+			Byte::writeUnsigned($out, $this->repetitions2);
+			Byte::writeUnsigned($out, count($this->ingredients));
+			foreach($this->ingredients as $ingredient){
+				CommonTypes::putRecipeIngredient($out, $ingredient);
+			}
 		}
 	}
 }

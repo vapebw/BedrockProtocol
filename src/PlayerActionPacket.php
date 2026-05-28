@@ -48,7 +48,11 @@ class PlayerActionPacket extends DataPacket implements ClientboundPacket, Server
 		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
 		$this->action = VarInt::readSignedInt($in);
 		$this->blockPosition = CommonTypes::getBlockPosition($in);
-		$this->resultPosition = CommonTypes::getBlockPosition($in);
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			$this->resultPosition = CommonTypes::getBlockPosition($in);
+		}else{
+			$this->resultPosition = new BlockPosition(0, 0, 0);
+		}
 		$this->face = VarInt::readSignedInt($in);
 	}
 
@@ -56,7 +60,9 @@ class PlayerActionPacket extends DataPacket implements ClientboundPacket, Server
 		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
 		VarInt::writeSignedInt($out, $this->action);
 		CommonTypes::putBlockPosition($out, $this->blockPosition);
-		CommonTypes::putBlockPosition($out, $this->resultPosition);
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			CommonTypes::putBlockPosition($out, $this->resultPosition);
+		}
 		VarInt::writeSignedInt($out, $this->face);
 	}
 

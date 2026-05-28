@@ -32,12 +32,14 @@ final class FullContainerName{
 
 	public static function read(ByteBufferReader $in) : self{
 		$containerId = Byte::readUnsigned($in);
-		$dynamicId = CommonTypes::readOptional($in, LE::readUnsignedInt(...));
+		$dynamicId = !CommonTypes::$legacy419ContainerNameFormat ? CommonTypes::readOptional($in, LE::readUnsignedInt(...)) : null;
 		return new self($containerId, $dynamicId);
 	}
 
 	public function write(ByteBufferWriter $out) : void{
 		Byte::writeUnsigned($out, $this->containerId);
-		CommonTypes::writeOptional($out, $this->dynamicId, LE::writeUnsignedInt(...));
+		if(!CommonTypes::$legacy419ContainerNameFormat){
+			CommonTypes::writeOptional($out, $this->dynamicId, LE::writeUnsignedInt(...));
+		}
 	}
 }

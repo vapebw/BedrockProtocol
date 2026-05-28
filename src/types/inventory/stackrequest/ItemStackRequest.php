@@ -86,10 +86,13 @@ final class ItemStackRequest{
 			$actions[] = self::readAction($in, $typeId);
 		}
 		$filterStrings = [];
-		for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
-			$filterStrings[] = CommonTypes::getString($in);
+		$filterStringCause = 0;
+		if(!CommonTypes::$legacy419ItemStackRequestFormat){
+			for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
+				$filterStrings[] = CommonTypes::getString($in);
+			}
+			$filterStringCause = LE::readSignedInt($in);
 		}
-		$filterStringCause = LE::readSignedInt($in);
 		return new self($requestId, $actions, $filterStrings, $filterStringCause);
 	}
 
@@ -100,10 +103,12 @@ final class ItemStackRequest{
 			Byte::writeUnsigned($out, $action->getTypeId());
 			$action->write($out);
 		}
-		VarInt::writeUnsignedInt($out, count($this->filterStrings));
-		foreach($this->filterStrings as $string){
-			CommonTypes::putString($out, $string);
+		if(!CommonTypes::$legacy419ItemStackRequestFormat){
+			VarInt::writeUnsignedInt($out, count($this->filterStrings));
+			foreach($this->filterStrings as $string){
+				CommonTypes::putString($out, $string);
+			}
+			LE::writeSignedInt($out, $this->filterStringCause);
 		}
-		LE::writeSignedInt($out, $this->filterStringCause);
 	}
 }
