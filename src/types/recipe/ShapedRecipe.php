@@ -126,7 +126,7 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		$block = CommonTypes::getString($in);
 		$priority = VarInt::readSignedInt($in);
 		$symmetric = CommonTypes::getBool($in);
-		$unlockingRequirement = RecipeUnlockingRequirement::read($in);
+		$unlockingRequirement = !CommonTypes::$useUnsignedY ? RecipeUnlockingRequirement::read($in) : new RecipeUnlockingRequirement(null);
 
 		$recipeNetId = CommonTypes::readRecipeNetId($in);
 
@@ -152,7 +152,9 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		CommonTypes::putString($out, $this->blockName);
 		VarInt::writeSignedInt($out, $this->priority);
 		CommonTypes::putBool($out, $this->symmetric);
-		$this->unlockingRequirement->write($out);
+		if(!CommonTypes::$useUnsignedY){
+			$this->unlockingRequirement->write($out);
+		}
 
 		CommonTypes::writeRecipeNetId($out, $this->recipeNetId);
 	}
