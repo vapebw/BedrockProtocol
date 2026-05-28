@@ -625,7 +625,7 @@ final class CommonTypes{
 		$rules = [];
 		for($i = 0; $i < $count; ++$i){
 			$name = self::getString($in);
-			$isPlayerModifiable = self::getBool($in);
+			$isPlayerModifiable = !self::$useUnsignedY ? self::getBool($in) : false;
 			$type = VarInt::readUnsignedInt($in);
 			$rules[$name] = self::readGameRule($in, $type, $isPlayerModifiable, $isStartGame);
 		}
@@ -643,7 +643,9 @@ final class CommonTypes{
 		VarInt::writeUnsignedInt($out, count($rules));
 		foreach($rules as $name => $rule){
 			self::putString($out, $name);
-			self::putBool($out, $rule->isPlayerModifiable());
+			if(!self::$useUnsignedY){
+				self::putBool($out, $rule->isPlayerModifiable());
+			}
 			VarInt::writeUnsignedInt($out, $rule->getTypeId());
 			$rule->encode($out, $isStartGame);
 		}
