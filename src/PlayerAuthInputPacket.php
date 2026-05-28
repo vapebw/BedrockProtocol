@@ -299,10 +299,17 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		if($this->inputFlags->get(PlayerAuthInputFlags::IN_CLIENT_PREDICTED_VEHICLE)){
 			$this->vehicleInfo = PlayerAuthInputVehicleInfo::read($in);
 		}
-		$this->analogMoveVecX = LE::readFloat($in);
-		$this->analogMoveVecZ = LE::readFloat($in);
-		$this->cameraOrientation = CommonTypes::getVector3($in);
-		$this->rawMove = CommonTypes::getVector2($in);
+		if($this->protocolId !== 419){
+			$this->analogMoveVecX = LE::readFloat($in);
+			$this->analogMoveVecZ = LE::readFloat($in);
+			$this->cameraOrientation = CommonTypes::getVector3($in);
+			$this->rawMove = CommonTypes::getVector2($in);
+		}else{
+			$this->analogMoveVecX = 0.0;
+			$this->analogMoveVecZ = 0.0;
+			$this->cameraOrientation = new Vector3(0.0, 0.0, 0.0);
+			$this->rawMove = new Vector2(0.0, 0.0);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -335,10 +342,12 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		if($this->vehicleInfo !== null){
 			$this->vehicleInfo->write($out);
 		}
-		LE::writeFloat($out, $this->analogMoveVecX);
-		LE::writeFloat($out, $this->analogMoveVecZ);
-		CommonTypes::putVector3($out, $this->cameraOrientation);
-		CommonTypes::putVector2($out, $this->rawMove);
+		if($this->protocolId !== 419){
+			LE::writeFloat($out, $this->analogMoveVecX);
+			LE::writeFloat($out, $this->analogMoveVecZ);
+			CommonTypes::putVector3($out, $this->cameraOrientation);
+			CommonTypes::putVector2($out, $this->rawMove);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
