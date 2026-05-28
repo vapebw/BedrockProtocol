@@ -12,6 +12,9 @@ use pocketmine\network\mcpe\protocol\proto\v419\packets\v419InventoryTransaction
 use pocketmine\network\mcpe\protocol\proto\v419\packets\v419StartGamePacket;
 use pocketmine\network\mcpe\protocol\proto\v419\packets\v419TickSyncPacket;
 
+use pocketmine\network\mcpe\protocol\proto\v419\packets\v419LevelChunkPacket;
+use pocketmine\network\mcpe\protocol\proto\v419\packets\v419NetworkChunkPublisherUpdatePacket;
+
 class v419PacketPool extends PacketPool{
 
 	public function __construct(){
@@ -23,6 +26,8 @@ class v419PacketPool extends PacketPool{
 		$this->registerPacket(new v419AdventureSettingsPacket());
 		$this->registerPacket(new v419CreativeContentPacket());
 		$this->registerPacket(new v419TickSyncPacket());
+		$this->registerPacket(new v419LevelChunkPacket());
+		$this->registerPacket(new v419NetworkChunkPublisherUpdatePacket());
 	}
 }
 
