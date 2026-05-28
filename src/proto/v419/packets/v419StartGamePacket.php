@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\proto\v419\packets;
 
-use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
 use pmmp\encoding\VarInt;
-use pocketmine\math\Vector3;
+use pocketmine\data\bedrock\BedrockDataFiles;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
-use pocketmine\network\mcpe\protocol\PacketDecodeException;
 use pocketmine\network\mcpe\protocol\PacketHandlerInterface;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
 use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
+use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\network\mcpe\protocol\types\Experiments;
@@ -22,12 +23,35 @@ use pocketmine\network\mcpe\protocol\types\ItemTypeEntry;
 use pocketmine\network\mcpe\protocol\types\LevelSettings;
 use pocketmine\network\mcpe\protocol\types\PlayerMovementSettings;
 use pocketmine\network\mcpe\protocol\types\SpawnSettings;
+use pocketmine\utils\Filesystem;
 use function count;
 
 class v419StartGamePacket extends StartGamePacket implements ClientboundPacket{
 	public const NETWORK_ID = 0x0b;
 
 	public array $itemTable = [];
+
+	private static ?array $cachedBlockPalette = null;
+
+	private static function getBlockPalette1_16_100() : array{
+		if(self::$cachedBlockPalette !== null){
+			return self::$cachedBlockPalette;
+		}
+		$raw = Filesystem::fileGetContents(BedrockDataFiles::CANONICAL_BLOCK_STATES_1_16_100_NBT);
+		$nbtSerializer = new NetworkNbtSerializer();
+		$entries = [];
+		foreach($nbtSerializer->readMultiple($raw) as $root){
+			$tag = $root->mustGetCompoundTag();
+			$name = $tag->getString("name");
+			$statesTag = $tag->getCompoundTag("states") ?? CompoundTag::create();
+			$blockTag = CompoundTag::create()
+				->setString("name", $name)
+				->setTag("states", $statesTag);
+			$entries[] = new BlockPaletteEntry($name, new CacheableNbt($blockTag));
+		}
+		self::$cachedBlockPalette = $entries;
+		return $entries;
+	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->actorUniqueId = CommonTypes::getActorUniqueId($in);
@@ -169,11 +193,12 @@ class v419StartGamePacket extends StartGamePacket implements ClientboundPacket{
 		LE::writeSignedLong($out, $this->currentTick);
 		VarInt::writeSignedInt($out, $this->enchantmentSeed);
 
-		VarInt::writeUnsignedInt($out, count($this->blockPalette));
-		$nbtWriter = new \pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer();
-		foreach($this->blockPalette as $entry){
+		$palette = $this->blockPalette;
+		VarInt::writeUnsignedInt($out, count($palette));
+		$nbtWriter = new NetworkNbtSerializer();
+		foreach($palette as $entry){
 			CommonTypes::putString($out, $entry->getName());
-			$out->writeByteArray($nbtWriter->write(new \pocketmine\nbt\TreeRoot($entry->getStates()->mustGetCompoundTag())));
+			$out->writeByteArray($nbtWriter->write(new TreeRoot($entry->getStates()->mustGetCompoundTag())));
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->itemTable));
@@ -193,6 +218,7 @@ class v419StartGamePacket extends StartGamePacket implements ClientboundPacket{
 			$result->$key = $value;
 		}
 		$result->itemTable = $itemTable;
+		$result->blockPalette = self::getBlockPalette1_16_100();
 		return $result;
 	}
 
