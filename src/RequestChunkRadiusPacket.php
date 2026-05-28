@@ -23,11 +23,8 @@ class RequestChunkRadiusPacket extends DataPacket implements ServerboundPacket{
 	public const NETWORK_ID = ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET;
 
 	public int $radius;
-	public int $maxRadius;
+	public int $maxRadius = 0;
 
-	/**
-	 * @generate-create-func
-	 */
 	public static function create(int $radius, int $maxRadius) : self{
 		$result = new self;
 		$result->radius = $radius;
@@ -37,12 +34,16 @@ class RequestChunkRadiusPacket extends DataPacket implements ServerboundPacket{
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->radius = VarInt::readSignedInt($in);
-		$this->maxRadius = Byte::readUnsigned($in);
+		if($this->protocolId !== 419){
+			$this->maxRadius = Byte::readUnsigned($in);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		VarInt::writeSignedInt($out, $this->radius);
-		Byte::writeUnsigned($out, $this->maxRadius);
+		if($this->protocolId !== 419){
+			Byte::writeUnsigned($out, $this->maxRadius);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
