@@ -76,8 +76,10 @@ class MobEffectPacket extends DataPacket implements ClientboundPacket{
 		$this->amplifier = VarInt::readSignedInt($in);
 		$this->particles = CommonTypes::getBool($in);
 		$this->duration = VarInt::readSignedInt($in);
-		$this->tick = VarInt::readUnsignedLong($in);
-		$this->ambient = CommonTypes::getBool($in);
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			$this->tick = VarInt::readUnsignedLong($in);
+			$this->ambient = CommonTypes::getBool($in);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -87,8 +89,10 @@ class MobEffectPacket extends DataPacket implements ClientboundPacket{
 		VarInt::writeSignedInt($out, $this->amplifier);
 		CommonTypes::putBool($out, $this->particles);
 		VarInt::writeSignedInt($out, $this->duration);
-		VarInt::writeUnsignedLong($out, $this->tick);
-		CommonTypes::putBool($out, $this->ambient);
+		if($this->protocolId !== ProtocolInfo::PROTOCOL_1_16_100){
+			VarInt::writeUnsignedLong($out, $this->tick);
+			CommonTypes::putBool($out, $this->ambient);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

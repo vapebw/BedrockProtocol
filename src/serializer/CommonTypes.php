@@ -71,6 +71,7 @@ final class CommonTypes{
 	public static bool $legacy419ItemStackRequestFormat = false;
 	public static bool $legacy419CraftingStackRequestFormat = false;
 	public static bool $legacy419ContainerNameFormat = false;
+	public static bool $legacy419SkinFormat = false;
 
 	private function __construct(){
 		//NOOP
@@ -111,6 +112,77 @@ final class CommonTypes{
 
 	/** @throws DataDecodeException */
 	public static function getSkin(ByteBufferReader $in) : SkinData{
+		if(self::$legacy419SkinFormat){
+			$skinId = self::getString($in);
+			$skinResourcePatch = self::getString($in);
+			$skinData = self::getSkinImage($in);
+			$animationCount = LE::readUnsignedInt($in);
+			$animations = [];
+			for($i = 0; $i < $animationCount; ++$i){
+				$skinImage = self::getSkinImage($in);
+				$animationType = LE::readUnsignedInt($in);
+				$animationFrames = LE::readFloat($in);
+				$expressionType = LE::readUnsignedInt($in);
+				$animations[] = new SkinAnimation($skinImage, $animationType, $animationFrames, $expressionType);
+			}
+			$capeData = self::getSkinImage($in);
+			$geometryData = self::getString($in);
+			$animationData = self::getString($in);
+			$premium = self::getBool($in);
+			$persona = self::getBool($in);
+			$capeOnClassic = self::getBool($in);
+			$capeId = self::getString($in);
+			$fullSkinId = self::getString($in);
+			$armSize = self::getString($in);
+			$skinColor = self::getString($in);
+			$personaPieceCount = LE::readUnsignedInt($in);
+			$personaPieces = [];
+			for($i = 0; $i < $personaPieceCount; ++$i){
+				$pieceId = self::getString($in);
+				$pieceType = self::getString($in);
+				$packId = self::getString($in);
+				$isDefaultPiece = self::getBool($in);
+				$productId = self::getString($in);
+				$personaPieces[] = new PersonaSkinPiece($pieceId, $pieceType, $packId, $isDefaultPiece, $productId);
+			}
+			$pieceTintColorCount = LE::readUnsignedInt($in);
+			$pieceTintColors = [];
+			for($i = 0; $i < $pieceTintColorCount; ++$i){
+				$pieceType = self::getString($in);
+				$colorCount = LE::readUnsignedInt($in);
+				$colors = [];
+				for($j = 0; $j < $colorCount; ++$j){
+					$colors[] = self::getString($in);
+				}
+				$pieceTintColors[] = new PersonaPieceTintColor(
+					$pieceType,
+					$colors
+				);
+			}
+			return new SkinData(
+				$skinId,
+				"",
+				$skinResourcePatch,
+				$skinData,
+				$animations,
+				$capeData,
+				$geometryData,
+				"",
+				$animationData,
+				$capeId,
+				$fullSkinId,
+				$armSize,
+				$skinColor,
+				$personaPieces,
+				$pieceTintColors,
+				true,
+				$premium,
+				$persona,
+				$capeOnClassic,
+				false,
+				true
+			);
+		}
 		$skinId = self::getString($in);
 		$skinPlayFabId = self::getString($in);
 		$skinResourcePatch = self::getString($in);
@@ -189,6 +261,45 @@ final class CommonTypes{
 	}
 
 	public static function putSkin(ByteBufferWriter $out, SkinData $skin) : void{
+		if(self::$legacy419SkinFormat){
+			self::putString($out, $skin->getSkinId());
+			self::putString($out, $skin->getResourcePatch());
+			self::putSkinImage($out, $skin->getSkinImage());
+			LE::writeUnsignedInt($out, count($skin->getAnimations()));
+			foreach($skin->getAnimations() as $animation){
+				self::putSkinImage($out, $animation->getImage());
+				LE::writeUnsignedInt($out, $animation->getType());
+				LE::writeFloat($out, $animation->getFrames());
+				LE::writeUnsignedInt($out, $animation->getExpressionType());
+			}
+			self::putSkinImage($out, $skin->getCapeImage());
+			self::putString($out, $skin->getGeometryData());
+			self::putString($out, $skin->getAnimationData());
+			self::putBool($out, $skin->isPremium());
+			self::putBool($out, $skin->isPersona());
+			self::putBool($out, $skin->isPersonaCapeOnClassic());
+			self::putString($out, $skin->getCapeId());
+			self::putString($out, $skin->getFullSkinId());
+			self::putString($out, $skin->getArmSize());
+			self::putString($out, $skin->getSkinColor());
+			LE::writeUnsignedInt($out, count($skin->getPersonaPieces()));
+			foreach($skin->getPersonaPieces() as $piece){
+				self::putString($out, $piece->getPieceId());
+				self::putString($out, $piece->getPieceType());
+				self::putString($out, $piece->getPackId());
+				self::putBool($out, $piece->isDefaultPiece());
+				self::putString($out, $piece->getProductId());
+			}
+			LE::writeUnsignedInt($out, count($skin->getPieceTintColors()));
+			foreach($skin->getPieceTintColors() as $tint){
+				self::putString($out, $tint->getPieceType());
+				LE::writeUnsignedInt($out, count($tint->getColors()));
+				foreach($tint->getColors() as $color){
+					self::putString($out, $color);
+				}
+			}
+			return;
+		}
 		self::putString($out, $skin->getSkinId());
 		self::putString($out, $skin->getPlayFabId());
 		self::putString($out, $skin->getResourcePatch());
