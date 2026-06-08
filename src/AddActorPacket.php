@@ -98,9 +98,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		$this->pitch = LE::readFloat($in);
 		$this->yaw = LE::readFloat($in);
 		$this->headYaw = LE::readFloat($in);
-		if($this->protocolId !== 419){
-			$this->bodyYaw = LE::readFloat($in);
-		}
+		$this->bodyYaw = LE::readFloat($in);
 
 		$attrCount = VarInt::readUnsignedInt($in);
 		for($i = 0; $i < $attrCount; ++$i){
@@ -112,9 +110,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		}
 
 		$this->metadata = CommonTypes::getEntityMetadata($in);
-		if($this->protocolId !== 419){
-			$this->syncedProperties = PropertySyncData::read($in);
-		}
+		$this->syncedProperties = PropertySyncData::read($in);
 
 		$linkCount = VarInt::readUnsignedInt($in);
 		for($i = 0; $i < $linkCount; ++$i){
@@ -131,9 +127,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		LE::writeFloat($out, $this->pitch);
 		LE::writeFloat($out, $this->yaw);
 		LE::writeFloat($out, $this->headYaw);
-		if($this->protocolId !== 419){
-			LE::writeFloat($out, $this->bodyYaw);
-		}
+		LE::writeFloat($out, $this->bodyYaw);
 
 		VarInt::writeUnsignedInt($out, count($this->attributes));
 		foreach($this->attributes as $attribute){
@@ -144,9 +138,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		}
 
 		CommonTypes::putEntityMetadata($out, $this->metadata);
-		if($this->protocolId !== 419){
-			$this->syncedProperties->write($out);
-		}
+		$this->syncedProperties->write($out);
 
 		VarInt::writeUnsignedInt($out, count($this->links));
 		foreach($this->links as $link){

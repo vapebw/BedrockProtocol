@@ -103,44 +103,6 @@ class AddPlayerPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		if($this->protocolId === 419){
-			$this->uuid = CommonTypes::getUUID($in);
-			$this->username = CommonTypes::getString($in);
-			$targetActorUniqueId = CommonTypes::getActorUniqueId($in);
-			$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
-			$this->platformChatId = CommonTypes::getString($in);
-			$this->position = CommonTypes::getVector3($in);
-			$this->motion = CommonTypes::getVector3($in);
-			$this->pitch = LE::readFloat($in);
-			$this->yaw = LE::readFloat($in);
-			$this->headYaw = LE::readFloat($in);
-			$this->item = CommonTypes::getItemStackWrapper($in);
-			$this->gameMode = 0;
-			$this->metadata = CommonTypes::getEntityMetadata($in);
-			$this->syncedProperties = new PropertySyncData([], []);
-
-			$packet = new \pocketmine\network\mcpe\protocol\proto\v419\packets\v419AdventureSettingsPacket();
-			$packet->decodePayload($in);
-
-			$this->abilitiesPacket = UpdateAbilitiesPacket::create(
-				new \pocketmine\network\mcpe\protocol\types\AbilitiesData(
-					$packet->commandPermission,
-					$packet->playerPermission,
-					$packet->entityUniqueId,
-					[]
-				)
-			);
-
-			$linkCount = VarInt::readUnsignedInt($in);
-			for($i = 0; $i < $linkCount; ++$i){
-				$this->links[$i] = CommonTypes::getEntityLink($in);
-			}
-
-			$this->deviceId = CommonTypes::getString($in);
-			$this->buildPlatform = LE::readSignedInt($in);
-			return;
-		}
-
 		$this->uuid = CommonTypes::getUUID($in);
 		$this->username = CommonTypes::getString($in);
 		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
@@ -168,41 +130,6 @@ class AddPlayerPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		if($this->protocolId === 419){
-			$data = $this->abilitiesPacket->getData();
-			CommonTypes::putUUID($out, $this->uuid);
-			CommonTypes::putString($out, $this->username);
-			CommonTypes::putActorUniqueId($out, $data->getTargetActorUniqueId());
-			CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
-			CommonTypes::putString($out, $this->platformChatId);
-			CommonTypes::putVector3($out, $this->position);
-			CommonTypes::putVector3Nullable($out, $this->motion);
-			LE::writeFloat($out, $this->pitch);
-			LE::writeFloat($out, $this->yaw);
-			LE::writeFloat($out, $this->headYaw);
-			CommonTypes::putItemStackWrapper($out, $this->item);
-			CommonTypes::putEntityMetadata($out, $this->metadata);
-
-			$packet = \pocketmine\network\mcpe\protocol\proto\v419\packets\v419AdventureSettingsPacket::create(
-				0,
-				$data->getCommandPermission(),
-				0,
-				$data->getPlayerPermission(),
-				0,
-				$data->getTargetActorUniqueId()
-			);
-			$packet->encodePayload($out);
-
-			VarInt::writeUnsignedInt($out, count($this->links));
-			foreach($this->links as $link){
-				CommonTypes::putEntityLink($out, $link);
-			}
-
-			CommonTypes::putString($out, $this->deviceId);
-			LE::writeSignedInt($out, $this->buildPlatform);
-			return;
-		}
-
 		CommonTypes::putUUID($out, $this->uuid);
 		CommonTypes::putString($out, $this->username);
 		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
