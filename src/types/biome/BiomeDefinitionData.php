@@ -70,11 +70,20 @@ final class BiomeDefinitionData{
 	public function getChunkGenData() : ?BiomeDefinitionChunkGenData{ return $this->chunkGenData; }
 
 	public static function read(ByteBufferReader $in) : self{
+		$protocolId = CommonTypes::getStreamProtocolId($in);
 		$nameIndex = LE::readUnsignedShort($in);
 		$id = LE::readUnsignedShort($in);
 		$temperature = LE::readFloat($in);
 		$downfall = LE::readFloat($in);
-		$foliageSnow = LE::readFloat($in);
+		if($protocolId < 844){
+			$redSporeDensity = LE::readFloat($in);
+			$blueSporeDensity = LE::readFloat($in);
+			$ashDensity = LE::readFloat($in);
+			$whiteAshDensity = LE::readFloat($in);
+			$foliageSnow = 0.0;
+		}else{
+			$foliageSnow = LE::readFloat($in);
+		}
 		$depth = LE::readFloat($in);
 		$scale = LE::readFloat($in);
 		$mapWaterColor = Color::fromARGB(LE::readUnsignedInt($in));
@@ -106,11 +115,19 @@ final class BiomeDefinitionData{
 	}
 
 	public function write(ByteBufferWriter $out) : void{
+		$protocolId = CommonTypes::getStreamProtocolId($out);
 		LE::writeUnsignedShort($out, $this->nameIndex);
 		LE::writeUnsignedShort($out, $this->id);
 		LE::writeFloat($out, $this->temperature);
 		LE::writeFloat($out, $this->downfall);
-		LE::writeFloat($out, $this->foliageSnow);
+		if($protocolId < 844){
+			LE::writeFloat($out, 0.0); // redSporeDensity
+			LE::writeFloat($out, 0.0); // blueSporeDensity
+			LE::writeFloat($out, 0.0); // ashDensity
+			LE::writeFloat($out, 0.0); // whiteAshDensity
+		}else{
+			LE::writeFloat($out, $this->foliageSnow);
+		}
 		LE::writeFloat($out, $this->depth);
 		LE::writeFloat($out, $this->scale);
 		LE::writeUnsignedInt($out, $this->mapWaterColor->toARGB());

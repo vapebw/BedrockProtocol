@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -37,9 +29,7 @@ class GameTestRequestPacket extends DataPacket implements ServerboundPacket{
 	private int $testsPerRow;
 	private string $testName;
 
-	/**
-	 * @generate-create-func
-	 */
+	
 	public static function create(
 		int $maxTestsPerBatch,
 		int $repeatCount,
@@ -64,9 +54,7 @@ class GameTestRequestPacket extends DataPacket implements ServerboundPacket{
 
 	public function getRepeatCount() : int{ return $this->repeatCount; }
 
-	/**
-	 * @see self::ROTATION_*
-	 */
+	
 	public function getRotation() : int{ return $this->rotation; }
 
 	public function isStopOnFailure() : bool{ return $this->stopOnFailure; }
@@ -82,7 +70,11 @@ class GameTestRequestPacket extends DataPacket implements ServerboundPacket{
 		$this->repeatCount = VarInt::readSignedInt($in);
 		$this->rotation = Byte::readUnsigned($in);
 		$this->stopOnFailure = CommonTypes::getBool($in);
-		$this->testPosition = CommonTypes::getBlockPosition($in);
+		if($this->protocolId < 944){
+			$this->testPosition = CommonTypes::getSignedBlockPosition($in);
+		}else{
+			$this->testPosition = CommonTypes::getBlockPosition($in);
+		}
 		$this->testsPerRow = VarInt::readSignedInt($in);
 		$this->testName = CommonTypes::getString($in);
 	}
@@ -92,7 +84,11 @@ class GameTestRequestPacket extends DataPacket implements ServerboundPacket{
 		VarInt::writeSignedInt($out, $this->repeatCount);
 		Byte::writeUnsigned($out, $this->rotation);
 		CommonTypes::putBool($out, $this->stopOnFailure);
-		CommonTypes::putBlockPosition($out, $this->testPosition);
+		if($this->protocolId < 944){
+			CommonTypes::putSignedBlockPosition($out, $this->testPosition);
+		}else{
+			CommonTypes::putBlockPosition($out, $this->testPosition);
+		}
 		VarInt::writeSignedInt($out, $this->testsPerRow);
 		CommonTypes::putString($out, $this->testName);
 	}

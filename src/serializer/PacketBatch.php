@@ -18,6 +18,8 @@ use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\DataDecodeException;
 use pmmp\encoding\VarInt;
+use pocketmine\network\mcpe\protocol\DataPacket;
+use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\Packet;
 use pocketmine\network\mcpe\protocol\PacketDecodeException;
 use pocketmine\network\mcpe\protocol\PacketPool;
@@ -89,6 +91,9 @@ class PacketBatch{
 	final public static function encodePackets(ByteBufferWriter $out, array $packets) : void{
 		foreach($packets as $packet){
 			$serializer = new ByteBufferWriter();
+			if($packet instanceof DataPacket){
+				CommonTypes::registerStreamProtocolId($serializer, $packet->protocolId);
+			}
 			$packet->encode($serializer);
 			//this may require a copy, so don't call it twice
 			$packetBuffer = $serializer->getData();

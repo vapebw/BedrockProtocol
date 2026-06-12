@@ -138,8 +138,10 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 		$this->avgUnaccountedTimePercent = LE::readFloat($in);
 
 		$this->memoryCategoryValues = [];
-		for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
-			$this->memoryCategoryValues[] = MemoryCategoryCounter::read($in);
+		if($this->protocolId >= 924){
+			for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
+				$this->memoryCategoryValues[] = MemoryCategoryCounter::read($in);
+			}
 		}
 
 		if($this->protocolId >= 975){
@@ -166,9 +168,11 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 		LE::writeFloat($out, $this->avgRemainderTimePercent);
 		LE::writeFloat($out, $this->avgUnaccountedTimePercent);
 
-		VarInt::writeUnsignedInt($out, count($this->memoryCategoryValues));
-		foreach($this->memoryCategoryValues as $value){
-			$value->write($out);
+		if($this->protocolId >= 924){
+			VarInt::writeUnsignedInt($out, count($this->memoryCategoryValues));
+			foreach($this->memoryCategoryValues as $value){
+				$value->write($out);
+			}
 		}
 
 		if($this->protocolId >= 975){

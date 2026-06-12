@@ -22,6 +22,8 @@ use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
  * @phpstan-template TTagType of Tag
  */
 final class CacheableNbt{
+	private static ?NetworkNbtSerializer $serializer = null;
+
 	private ?string $encodedNbt = null;
 
 	/**
@@ -39,6 +41,7 @@ final class CacheableNbt{
 	}
 
 	public function getEncodedNbt() : string{
-		return $this->encodedNbt ?? ($this->encodedNbt = (new NetworkNbtSerializer())->write(new TreeRoot($this->nbtRoot)));
+		self::$serializer ??= new NetworkNbtSerializer();
+		return $this->encodedNbt ?? ($this->encodedNbt = self::$serializer->write(new TreeRoot($this->nbtRoot)));
 	}
 }

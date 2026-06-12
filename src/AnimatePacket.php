@@ -18,6 +18,7 @@ use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
+use pmmp\encoding\VarInt;
 use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 
 class AnimatePacket extends DataPacket implements ClientboundPacket, ServerboundPacket{
@@ -28,6 +29,8 @@ class AnimatePacket extends DataPacket implements ClientboundPacket, Serverbound
 	public const ACTION_STOP_SLEEP = 3;
 	public const ACTION_CRITICAL_HIT = 4;
 	public const ACTION_MAGICAL_CRITICAL_HIT = 5;
+	public const ACTION_ROW_RIGHT = 128;
+	public const ACTION_ROW_LEFT = 129;
 
 	public int $action;
 	public int $actorRuntimeId;
@@ -44,17 +47,35 @@ class AnimatePacket extends DataPacket implements ClientboundPacket, Serverbound
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->action = Byte::readUnsigned($in);
+		$protocolId = CommonTypes::getStreamProtocolId($in);
+		$this->action = $protocolId >= 898 ? Byte::readUnsigned($in) : VarInt::readSignedInt($in);
 		$this->actorRuntimeId = CommonTypes::getActorRuntimeId($in);
-		$this->data = LE::readFloat($in);
-		$this->swingSource = CommonTypes::readOptional($in, CommonTypes::getString(...));
+		if($protocolId >= 859 || ($this->action === self::ACTION_ROW_LEFT || $this->action === self::ACTION_ROW_RIGHT)){
+			$this->data = LE::readFloat($in);
+		}else{
+			$this->data = 0.0;
+		}
+		if($protocolId >= 898){
+			$this->swingSource = CommonTypes::readOptional($in, CommonTypes::getString(...));
+		}else{
+			$this->swingSource = null;
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		Byte::writeUnsigned($out, $this->action);
+		$protocolId = CommonTypes::getStreamProtocolId($out);
+		if($protocolId >= 898){
+			Byte::writeUnsigned($out, $this->action);
+		}else{
+			VarInt::writeSignedInt($out, $this->action);
+		}
 		CommonTypes::putActorRuntimeId($out, $this->actorRuntimeId);
-		LE::writeFloat($out, $this->data);
-		CommonTypes::writeOptional($out, $this->swingSource, CommonTypes::putString(...));
+		if($protocolId >= 859 || ($this->action === self::ACTION_ROW_LEFT || $this->action === self::ACTION_ROW_RIGHT)){
+			LE::writeFloat($out, $this->data);
+		}
+		if($protocolId >= 898){
+			CommonTypes::writeOptional($out, $this->swingSource, CommonTypes::putString(...));
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

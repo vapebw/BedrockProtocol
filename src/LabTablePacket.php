@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -31,9 +23,7 @@ class LabTablePacket extends DataPacket implements ClientboundPacket, Serverboun
 	public BlockPosition $blockPosition;
 	public int $reactionType;
 
-	/**
-	 * @generate-create-func
-	 */
+	
 	public static function create(int $actionType, BlockPosition $blockPosition, int $reactionType) : self{
 		$result = new self;
 		$result->actionType = $actionType;
@@ -44,13 +34,21 @@ class LabTablePacket extends DataPacket implements ClientboundPacket, Serverboun
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->actionType = Byte::readUnsigned($in);
-		$this->blockPosition = CommonTypes::getBlockPosition($in);
+		if($this->protocolId < 944){
+			$this->blockPosition = CommonTypes::getSignedBlockPosition($in);
+		}else{
+			$this->blockPosition = CommonTypes::getBlockPosition($in);
+		}
 		$this->reactionType = Byte::readUnsigned($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		Byte::writeUnsigned($out, $this->actionType);
-		CommonTypes::putBlockPosition($out, $this->blockPosition);
+		if($this->protocolId < 944){
+			CommonTypes::putSignedBlockPosition($out, $this->blockPosition);
+		}else{
+			CommonTypes::putBlockPosition($out, $this->blockPosition);
+		}
 		Byte::writeUnsigned($out, $this->reactionType);
 	}
 

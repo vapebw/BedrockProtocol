@@ -188,18 +188,19 @@ final class AvailableCommandsPacket extends DataPacket implements ClientboundPac
 		}
 
 		$this->enums = [];
+		$valueListSize = count($this->enumValues);
 		for($i = 0, $size = VarInt::readUnsignedInt($in); $i < $size; $i++){
-			$this->enums[] = CommandEnumRawData::read($in);
+			$this->enums[] = CommandEnumRawData::read($in, $valueListSize, $this->protocolId);
 		}
 
 		$this->chainedSubCommandData = [];
 		for($i = 0, $size = VarInt::readUnsignedInt($in); $i < $size; $i++){
-			$this->chainedSubCommandData[] = ChainedSubCommandRawData::read($in);
+			$this->chainedSubCommandData[] = ChainedSubCommandRawData::read($in, $this->protocolId);
 		}
 
 		$this->commandData = [];
 		for($i = 0, $size = VarInt::readUnsignedInt($in); $i < $size; $i++){
-			$this->commandData[] = CommandRawData::read($in);
+			$this->commandData[] = CommandRawData::read($in, $this->protocolId);
 		}
 
 		$this->softEnums = [];
@@ -230,18 +231,19 @@ final class AvailableCommandsPacket extends DataPacket implements ClientboundPac
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->enums));
+		$valueListSize = count($this->enumValues);
 		foreach($this->enums as $enum){
-			$enum->write($out);
+			$enum->write($out, $valueListSize, $this->protocolId);
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->chainedSubCommandData));
 		foreach($this->chainedSubCommandData as $data){
-			$data->write($out);
+			$data->write($out, $this->protocolId);
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->commandData));
 		foreach($this->commandData as $data){
-			$data->write($out);
+			$data->write($out, $this->protocolId);
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->softEnums));

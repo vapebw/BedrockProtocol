@@ -146,9 +146,15 @@ final class LevelSettings{
 		$this->experimentalGameplayOverride = CommonTypes::readOptional($in, CommonTypes::getBool(...));
 		$this->chatRestrictionLevel = Byte::readUnsigned($in);
 		$this->disablePlayerInteractions = CommonTypes::getBool($in);
+		if(CommonTypes::getStreamProtocolId($in) < 924){
+			CommonTypes::getString($in); // serverId
+			CommonTypes::getString($in); // worldId
+			CommonTypes::getString($in); // scenarioId
+			CommonTypes::getString($in); // ownerId
+		}
 	}
 
-	public function write(ByteBufferWriter $out) : void{
+	public function write(ByteBufferWriter $out, ?ServerTelemetryData $serverTelemetryData = null) : void{
 		LE::writeUnsignedLong($out, $this->seed);
 		$this->spawnSettings->write($out);
 		VarInt::writeSignedInt($out, $this->generator);
@@ -197,5 +203,18 @@ final class LevelSettings{
 		CommonTypes::writeOptional($out, $this->experimentalGameplayOverride, CommonTypes::putBool(...));
 		Byte::writeUnsigned($out, $this->chatRestrictionLevel);
 		CommonTypes::putBool($out, $this->disablePlayerInteractions);
+		if(CommonTypes::getStreamProtocolId($out) < 924){
+			if($serverTelemetryData !== null){
+				CommonTypes::putString($out, $serverTelemetryData->getServerId());
+				CommonTypes::putString($out, $serverTelemetryData->getWorldId());
+				CommonTypes::putString($out, $serverTelemetryData->getScenarioId());
+				CommonTypes::putString($out, $serverTelemetryData->getOwnerId());
+			}else{
+				CommonTypes::putString($out, "");
+				CommonTypes::putString($out, "");
+				CommonTypes::putString($out, "");
+				CommonTypes::putString($out, "");
+			}
+		}
 	}
 }

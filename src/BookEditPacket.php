@@ -13,7 +13,8 @@
 declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol;
-
+ 
+use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\VarInt;
@@ -39,22 +40,27 @@ class BookEditPacket extends DataPacket implements ServerboundPacket{
 	public string $xuid;
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->inventorySlot = VarInt::readSignedInt($in);
-		$this->type = VarInt::readUnsignedInt($in);
+		if($this->protocolId < 924){
+			$this->type = Byte::readUnsigned($in);
+			$this->inventorySlot = Byte::readUnsigned($in);
+		}else{
+			$this->inventorySlot = VarInt::readSignedInt($in);
+			$this->type = VarInt::readUnsignedInt($in);
+		}
 
 		switch($this->type){
 			case self::TYPE_REPLACE_PAGE:
 			case self::TYPE_ADD_PAGE:
-				$this->pageNumber = VarInt::readSignedInt($in);
+				$this->pageNumber = $this->protocolId < 924 ? Byte::readUnsigned($in) : VarInt::readSignedInt($in);
 				$this->text = CommonTypes::getString($in);
 				$this->photoName = CommonTypes::getString($in);
 				break;
 			case self::TYPE_DELETE_PAGE:
-				$this->pageNumber = VarInt::readSignedInt($in);
+				$this->pageNumber = $this->protocolId < 924 ? Byte::readUnsigned($in) : VarInt::readSignedInt($in);
 				break;
 			case self::TYPE_SWAP_PAGES:
-				$this->pageNumber = VarInt::readSignedInt($in);
-				$this->secondaryPageNumber = VarInt::readSignedInt($in);
+				$this->pageNumber = $this->protocolId < 924 ? Byte::readUnsigned($in) : VarInt::readSignedInt($in);
+				$this->secondaryPageNumber = $this->protocolId < 924 ? Byte::readUnsigned($in) : VarInt::readSignedInt($in);
 				break;
 			case self::TYPE_SIGN_BOOK:
 				$this->title = CommonTypes::getString($in);
@@ -67,22 +73,40 @@ class BookEditPacket extends DataPacket implements ServerboundPacket{
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		VarInt::writeSignedInt($out, $this->inventorySlot);
-		VarInt::writeUnsignedInt($out, $this->type);
+		if($this->protocolId < 924){
+			Byte::writeUnsigned($out, $this->type);
+			Byte::writeUnsigned($out, $this->inventorySlot);
+		}else{
+			VarInt::writeSignedInt($out, $this->inventorySlot);
+			VarInt::writeUnsignedInt($out, $this->type);
+		}
 
 		switch($this->type){
 			case self::TYPE_REPLACE_PAGE:
 			case self::TYPE_ADD_PAGE:
-				VarInt::writeSignedInt($out, $this->pageNumber);
+				if($this->protocolId < 924){
+					Byte::writeUnsigned($out, $this->pageNumber);
+				}else{
+					VarInt::writeSignedInt($out, $this->pageNumber);
+				}
 				CommonTypes::putString($out, $this->text);
 				CommonTypes::putString($out, $this->photoName);
 				break;
 			case self::TYPE_DELETE_PAGE:
-				VarInt::writeSignedInt($out, $this->pageNumber);
+				if($this->protocolId < 924){
+					Byte::writeUnsigned($out, $this->pageNumber);
+				}else{
+					VarInt::writeSignedInt($out, $this->pageNumber);
+				}
 				break;
 			case self::TYPE_SWAP_PAGES:
-				VarInt::writeSignedInt($out, $this->pageNumber);
-				VarInt::writeSignedInt($out, $this->secondaryPageNumber);
+				if($this->protocolId < 924){
+					Byte::writeUnsigned($out, $this->pageNumber);
+					Byte::writeUnsigned($out, $this->secondaryPageNumber);
+				}else{
+					VarInt::writeSignedInt($out, $this->pageNumber);
+					VarInt::writeSignedInt($out, $this->secondaryPageNumber);
+				}
 				break;
 			case self::TYPE_SIGN_BOOK:
 				CommonTypes::putString($out, $this->title);

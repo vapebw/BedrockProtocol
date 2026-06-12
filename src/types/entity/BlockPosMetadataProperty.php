@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -34,11 +26,20 @@ final class BlockPosMetadataProperty implements MetadataProperty{
 	}
 
 	public static function read(ByteBufferReader $in) : self{
+		$protocolId = CommonTypes::getStreamProtocolId($in);
+		if($protocolId < 944){
+			return new self(CommonTypes::getSignedBlockPosition($in));
+		}
 		return new self(CommonTypes::getBlockPosition($in));
 	}
 
 	public function write(ByteBufferWriter $out) : void{
-		CommonTypes::putBlockPosition($out, $this->value);
+		$protocolId = CommonTypes::getStreamProtocolId($out);
+		if($protocolId < 944){
+			CommonTypes::putSignedBlockPosition($out, $this->value);
+		}else{
+			CommonTypes::putBlockPosition($out, $this->value);
+		}
 	}
 
 	public function equals(MetadataProperty $other) : bool{

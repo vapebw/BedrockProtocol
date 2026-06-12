@@ -36,8 +36,15 @@ final class BiomeClimateData{
 	public function getSnowAccumulationMax() : float{ return $this->snowAccumulationMax; }
 
 	public static function read(ByteBufferReader $in) : self{
+		$protocolId = \pocketmine\network\mcpe\protocol\serializer\CommonTypes::getStreamProtocolId($in);
 		$temperature = LE::readFloat($in);
 		$downfall = LE::readFloat($in);
+		if($protocolId < 844){
+			$redSporeDensity = LE::readFloat($in);
+			$blueSporeDensity = LE::readFloat($in);
+			$ashDensity = LE::readFloat($in);
+			$whiteAshDensity = LE::readFloat($in);
+		}
 		$snowAccumulationMin = LE::readFloat($in);
 		$snowAccumulationMax = LE::readFloat($in);
 
@@ -50,8 +57,15 @@ final class BiomeClimateData{
 	}
 
 	public function write(ByteBufferWriter $out) : void{
+		$protocolId = \pocketmine\network\mcpe\protocol\serializer\CommonTypes::getStreamProtocolId($out);
 		LE::writeFloat($out, $this->temperature);
 		LE::writeFloat($out, $this->downfall);
+		if($protocolId < 844){
+			LE::writeFloat($out, 0.0); // redSporeDensity
+			LE::writeFloat($out, 0.0); // blueSporeDensity
+			LE::writeFloat($out, 0.0); // ashDensity
+			LE::writeFloat($out, 0.0); // whiteAshDensity
+		}
 		LE::writeFloat($out, $this->snowAccumulationMin);
 		LE::writeFloat($out, $this->snowAccumulationMax);
 	}

@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -25,27 +17,15 @@ use function count;
 class VoxelShapesPacket extends DataPacket implements ClientboundPacket{
 	public const NETWORK_ID = ProtocolInfo::VOXEL_SHAPES_PACKET;
 
-	/**
-	 * @var SerializableVoxelShape[]
-	 * @phpstan-var list<SerializableVoxelShape>
-	 */
+	
 	private array $shapes;
-	/**
-	 * @var int[]
-	 * @phpstan-var array<string, int>
-	 */
+	
 	private array $nameMap;
 
 	private int $customShapeCount;
 
-	/**
-	 * @generate-create-func
-	 * @param SerializableVoxelShape[] $shapes
-	 * @param int[]                    $nameMap
-	 * @phpstan-param list<SerializableVoxelShape> $shapes
-	 * @phpstan-param array<string, int>           $nameMap
-	 */
-	public static function create(array $shapes, array $nameMap, int $customShapeCount) : self{
+	
+	public static function create(array $shapes, array $nameMap, int $customShapeCount = 0) : self{
 		$result = new self;
 		$result->shapes = $shapes;
 		$result->nameMap = $nameMap;
@@ -53,16 +33,8 @@ class VoxelShapesPacket extends DataPacket implements ClientboundPacket{
 		return $result;
 	}
 
-	/**
-	 * @return SerializableVoxelShape[]
-	 * @phpstan-return list<SerializableVoxelShape>
-	 */
 	public function getShapes() : array{ return $this->shapes; }
 
-	/**
-	 * @return int[]
-	 * @phpstan-return array<string, int>
-	 */
 	public function getNameMap() : array{ return $this->nameMap; }
 
 	public function getCustomShapeCount() : int{ return $this->customShapeCount; }
@@ -80,7 +52,11 @@ class VoxelShapesPacket extends DataPacket implements ClientboundPacket{
 			$this->nameMap[$name] = $id;
 		}
 
-		$this->customShapeCount = LE::readUnsignedShort($in);
+		if($this->protocolId >= 975){
+			$this->customShapeCount = LE::readUnsignedShort($in);
+		}else{
+			$this->customShapeCount = 0;
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -95,7 +71,9 @@ class VoxelShapesPacket extends DataPacket implements ClientboundPacket{
 			LE::writeUnsignedShort($out, $id);
 		}
 
-		LE::writeUnsignedShort($out, $this->customShapeCount);
+		if($this->protocolId >= 975){
+			LE::writeUnsignedShort($out, $this->customShapeCount);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

@@ -19,6 +19,7 @@ use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
 use pmmp\encoding\VarInt;
 use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
+use pocketmine\network\mcpe\protocol\types\command\CommandPermissions;
 use function count;
 
 final class CommandRawData{
@@ -61,16 +62,16 @@ final class CommandRawData{
 	 */
 	public function getOverloads() : array{ return $this->overloads; }
 
-	public static function read(ByteBufferReader $in) : self{
+	public static function read(ByteBufferReader $in, int $protocolId) : self{
 		$name = CommonTypes::getString($in);
 		$description = CommonTypes::getString($in);
 		$flags = LE::readUnsignedShort($in);
-		$permission = CommonTypes::getString($in);
+		$permission = $protocolId >= 898 ? CommonTypes::getString($in) : CommandPermissions::toName(\pmmp\encoding\Byte::readUnsigned($in));
 		$aliasEnumIndex = LE::readSignedInt($in); //may be -1 for not set
 
 		$chainedSubCommandDataIndexes = [];
 		for($i = 0, $size = VarInt::readUnsignedInt($in); $i < $size; $i++){
-			$chainedSubCommandDataIndexes[] = LE::readUnsignedInt($in);
+			$chainedSubCommandDataIndexes[] = $protocolId >= 898 ? LE::readUnsignedInt($in) : LE::readUnsignedShort($in);
 		}
 
 		$overloads = [];
@@ -89,16 +90,24 @@ final class CommandRawData{
 		);
 	}
 
-	public function write(ByteBufferWriter $out) : void{
+	public function write(ByteBufferWriter $out, int $protocolId) : void{
 		CommonTypes::putString($out, $this->name);
 		CommonTypes::putString($out, $this->description);
 		LE::writeUnsignedShort($out, $this->flags);
-		CommonTypes::putString($out, $this->permission);
+		if($protocolId >= 898){
+			CommonTypes::putString($out, $this->permission);
+		}else{
+			\pmmp\encoding\Byte::writeUnsigned($out, CommandPermissions::fromName($this->permission));
+		}
 		LE::writeSignedInt($out, $this->aliasEnumIndex);
 
 		VarInt::writeUnsignedInt($out, count($this->chainedSubCommandDataIndexes));
 		foreach($this->chainedSubCommandDataIndexes as $index){
-			LE::writeUnsignedInt($out, $index);
+			if($protocolId >= 898){
+				LE::writeUnsignedInt($out, $index);
+			}else{
+				LE::writeUnsignedShort($out, $index);
+			}
 		}
 
 		VarInt::writeUnsignedInt($out, count($this->overloads));

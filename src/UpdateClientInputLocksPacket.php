@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -22,24 +14,32 @@ class UpdateClientInputLocksPacket extends DataPacket implements ClientboundPack
 	public const NETWORK_ID = ProtocolInfo::UPDATE_CLIENT_INPUT_LOCKS_PACKET;
 
 	private int $flags;
+	private ?\pocketmine\math\Vector3 $position = null;
 
-	/**
-	 * @generate-create-func
-	 */
-	public static function create(int $flags) : self{
+	
+	public static function create(int $flags, ?\pocketmine\math\Vector3 $position = null) : self{
 		$result = new self;
 		$result->flags = $flags;
+		$result->position = $position;
 		return $result;
 	}
 
 	public function getFlags() : int{ return $this->flags; }
 
+	public function getPosition() : ?\pocketmine\math\Vector3{ return $this->position; }
+
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->flags = VarInt::readUnsignedInt($in);
+		if($this->protocolId < 975){
+			$this->position = \pocketmine\network\mcpe\protocol\serializer\CommonTypes::getVector3($in);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		VarInt::writeUnsignedInt($out, $this->flags);
+		if($this->protocolId < 975){
+			\pocketmine\network\mcpe\protocol\serializer\CommonTypes::putVector3($out, $this->position ?? new \pocketmine\math\Vector3(0, 0, 0));
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

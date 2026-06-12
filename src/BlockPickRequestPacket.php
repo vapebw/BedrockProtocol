@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -27,9 +19,7 @@ class BlockPickRequestPacket extends DataPacket implements ServerboundPacket{
 	public bool $addUserData = false;
 	public int $hotbarSlot;
 
-	/**
-	 * @generate-create-func
-	 */
+	
 	public static function create(BlockPosition $blockPosition, bool $addUserData, int $hotbarSlot) : self{
 		$result = new self;
 		$result->blockPosition = $blockPosition;
@@ -39,13 +29,21 @@ class BlockPickRequestPacket extends DataPacket implements ServerboundPacket{
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->blockPosition = CommonTypes::getBlockPosition($in);
+		if($this->protocolId < 944){
+			$this->blockPosition = CommonTypes::getSignedBlockPosition($in);
+		}else{
+			$this->blockPosition = CommonTypes::getBlockPosition($in);
+		}
 		$this->addUserData = CommonTypes::getBool($in);
 		$this->hotbarSlot = Byte::readUnsigned($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		CommonTypes::putBlockPosition($out, $this->blockPosition);
+		if($this->protocolId < 944){
+			CommonTypes::putSignedBlockPosition($out, $this->blockPosition);
+		}else{
+			CommonTypes::putBlockPosition($out, $this->blockPosition);
+		}
 		CommonTypes::putBool($out, $this->addUserData);
 		Byte::writeUnsigned($out, $this->hotbarSlot);
 	}

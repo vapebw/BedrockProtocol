@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -95,7 +87,11 @@ class UseItemTransactionData extends TransactionData{
 		$this->clickPosition = CommonTypes::getVector3($in);
 		$this->blockRuntimeId = VarInt::readUnsignedInt($in);
 		$this->clientInteractPrediction = PredictedResult::fromPacket(VarInt::readUnsignedInt($in));
-		$this->clientCooldownState = Byte::readUnsigned($in);
+		if(CommonTypes::getStreamProtocolId($in) >= 944){
+			$this->clientCooldownState = Byte::readUnsigned($in);
+		}else{
+			$this->clientCooldownState = 0;
+		}
 	}
 
 	protected function encodeData(ByteBufferWriter $out) : void{
@@ -109,12 +105,12 @@ class UseItemTransactionData extends TransactionData{
 		CommonTypes::putVector3($out, $this->clickPosition);
 		VarInt::writeUnsignedInt($out, $this->blockRuntimeId);
 		VarInt::writeUnsignedInt($out, $this->clientInteractPrediction->value);
-		Byte::writeUnsigned($out, $this->clientCooldownState);
+		if(CommonTypes::getStreamProtocolId($out) >= 944){
+			Byte::writeUnsigned($out, $this->clientCooldownState);
+		}
 	}
 
-	/**
-	 * @generate-create-func
-	 */
+	
 	private static function initSelf(
 		int $actionType,
 		TriggerType $triggerType,
@@ -143,9 +139,7 @@ class UseItemTransactionData extends TransactionData{
 		return $result;
 	}
 
-	/**
-	 * @param NetworkInventoryAction[] $actions
-	 */
+	
 	public static function new(array $actions, int $actionType, TriggerType $triggerType, BlockPosition $blockPosition, int $face, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $playerPosition, Vector3 $clickPosition, int $blockRuntimeId, PredictedResult $clientInteractPrediction, int $clientCooldownState) : self{
 		$result = self::initSelf($actionType, $triggerType, $blockPosition, $face, $hotbarSlot, $itemInHand, $playerPosition, $clickPosition, $blockRuntimeId, $clientInteractPrediction, $clientCooldownState);
 		$result->actions = $actions;

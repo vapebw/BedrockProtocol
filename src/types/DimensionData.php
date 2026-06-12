@@ -24,7 +24,7 @@ final class DimensionData{
 		private int $maxHeight,
 		private int $minHeight,
 		private int $generator,
-		private int $dimensionType,
+		private int $dimensionType = 0,
 	){}
 
 	public function getMaxHeight() : int{ return $this->maxHeight; }
@@ -39,7 +39,12 @@ final class DimensionData{
 		$maxHeight = VarInt::readSignedInt($in);
 		$minHeight = VarInt::readSignedInt($in);
 		$generator = VarInt::readSignedInt($in);
-		$dimensionType = VarInt::readSignedInt($in);
+		$protocolId = \pocketmine\network\mcpe\protocol\serializer\CommonTypes::getStreamProtocolId($in);
+		if($protocolId >= 944){
+			$dimensionType = VarInt::readSignedInt($in);
+		}else{
+			$dimensionType = 0;
+		}
 
 		return new self($maxHeight, $minHeight, $generator, $dimensionType);
 	}
@@ -48,6 +53,9 @@ final class DimensionData{
 		VarInt::writeSignedInt($out, $this->maxHeight);
 		VarInt::writeSignedInt($out, $this->minHeight);
 		VarInt::writeSignedInt($out, $this->generator);
-		VarInt::writeSignedInt($out, $this->dimensionType);
+		$protocolId = \pocketmine\network\mcpe\protocol\serializer\CommonTypes::getStreamProtocolId($out);
+		if($protocolId >= 944){
+			VarInt::writeSignedInt($out, $this->dimensionType);
+		}
 	}
 }

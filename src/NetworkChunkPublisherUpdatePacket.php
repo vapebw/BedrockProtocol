@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -28,15 +20,12 @@ class NetworkChunkPublisherUpdatePacket extends DataPacket implements Clientboun
 
 	public BlockPosition $blockPosition;
 	public int $radius;
-	/** @var ChunkPosition[] */
+	
 	public array $savedChunks = [];
 
 	public const MAX_SAVED_CHUNKS = 9216;
 
-	/**
-	 * @generate-create-func
-	 * @param ChunkPosition[] $savedChunks
-	 */
+	
 	public static function create(BlockPosition $blockPosition, int $radius, array $savedChunks) : self{
 		$result = new self;
 		$result->blockPosition = $blockPosition;
@@ -46,7 +35,7 @@ class NetworkChunkPublisherUpdatePacket extends DataPacket implements Clientboun
 	}
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->blockPosition = CommonTypes::getBlockPosition($in);
+		$this->blockPosition = CommonTypes::getSignedBlockPosition($in);
 		$this->radius = VarInt::readUnsignedInt($in);
 
 		$count = LE::readUnsignedInt($in);
@@ -59,7 +48,7 @@ class NetworkChunkPublisherUpdatePacket extends DataPacket implements Clientboun
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		CommonTypes::putBlockPosition($out, $this->blockPosition);
+		CommonTypes::putSignedBlockPosition($out, $this->blockPosition);
 		VarInt::writeUnsignedInt($out, $this->radius);
 
 		LE::writeUnsignedInt($out, count($this->savedChunks));

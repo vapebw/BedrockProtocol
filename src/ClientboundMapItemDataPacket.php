@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
@@ -42,13 +34,13 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 	public bool $isLocked = false;
 	public BlockPosition $origin;
 
-	/** @var int[] */
+	
 	public array $parentMapIds = [];
 	public int $scale;
 
-	/** @var MapTrackedObject[] */
+	
 	public array $trackedEntities = [];
-	/** @var MapDecoration[] */
+	
 	public array $decorations = [];
 
 	public int $xOffset = 0;
@@ -60,7 +52,11 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 		$this->type = VarInt::readUnsignedInt($in);
 		$this->dimensionId = Byte::readUnsigned($in);
 		$this->isLocked = CommonTypes::getBool($in);
-		$this->origin = CommonTypes::getBlockPosition($in);
+		if($this->protocolId < 944){
+			$this->origin = CommonTypes::getSignedBlockPosition($in);
+		}else{
+			$this->origin = CommonTypes::getBlockPosition($in);
+		}
 
 		if(($this->type & self::BITFLAG_MAP_CREATION) !== 0){
 			$count = VarInt::readUnsignedInt($in);
@@ -69,7 +65,7 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 			}
 		}
 
-		if(($this->type & (self::BITFLAG_MAP_CREATION | self::BITFLAG_DECORATION_UPDATE | self::BITFLAG_TEXTURE_UPDATE)) !== 0){ //Decoration bitflag or colour bitflag
+		if(($this->type & (self::BITFLAG_MAP_CREATION | self::BITFLAG_DECORATION_UPDATE | self::BITFLAG_TEXTURE_UPDATE)) !== 0){ 
 			$this->scale = Byte::readUnsigned($in);
 		}
 
@@ -130,7 +126,11 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 		VarInt::writeUnsignedInt($out, $type);
 		Byte::writeUnsigned($out, $this->dimensionId);
 		CommonTypes::putBool($out, $this->isLocked);
-		CommonTypes::putBlockPosition($out, $this->origin);
+		if($this->protocolId < 944){
+			CommonTypes::putSignedBlockPosition($out, $this->origin);
+		}else{
+			CommonTypes::putBlockPosition($out, $this->origin);
+		}
 
 		if(($type & self::BITFLAG_MAP_CREATION) !== 0){
 			VarInt::writeUnsignedInt($out, $parentMapIdsCount);
@@ -173,7 +173,7 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 			VarInt::writeSignedInt($out, $this->xOffset);
 			VarInt::writeSignedInt($out, $this->yOffset);
 
-			VarInt::writeUnsignedInt($out, $this->colors->getWidth() * $this->colors->getHeight()); //list count, but we handle it as a 2D array... thanks for the confusion mojang
+			VarInt::writeUnsignedInt($out, $this->colors->getWidth() * $this->colors->getHeight()); 
 
 			$this->colors->encode($out);
 		}

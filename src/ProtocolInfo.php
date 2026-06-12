@@ -1,49 +1,41 @@
 <?php
 
-/*
- * This file is part of BedrockProtocol.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/BedrockProtocol>
- *
- * BedrockProtocol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- */
+
 
 declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol;
 
-/**
- * Version numbers and packet IDs for the current Minecraft PE protocol
- */
+
 final class ProtocolInfo{
 
 	private function __construct(){
-		//NOOP
+		
 	}
 
-	/**
-	 * NOTE TO DEVELOPERS
-	 * Do not waste your time or ours submitting pull requests changing game and/or protocol version numbers.
-	 * Pull requests changing game and/or protocol version numbers will be closed.
-	 *
-	 * This file is generated automatically, do not edit it manually.
-	 */
+	
 
-	/** Actual Minecraft: PE protocol version */
+	
 	public const CURRENT_PROTOCOL = 975;
-
-	public const PROTOCOL_1_26_10 = 944;
  
- 	public const ACCEPTED_PROTOCOL = [
- 		self::CURRENT_PROTOCOL,
- 		self::PROTOCOL_1_26_10,
- 	];
+ 	public const PROTOCOL_1_26_0 = 924;
+ 	public const PROTOCOL_1_26_10 = 944;
+ 	public const PROTOCOL_1_21_130 = 898;
+ 	public const PROTOCOL_1_21_100 = 827;
+ 	public const PROTOCOL_1_21_111 = 844;
+  
+  	public const ACCEPTED_PROTOCOL = [
+  		self::CURRENT_PROTOCOL,
+  		self::PROTOCOL_1_26_10,
+ 		self::PROTOCOL_1_26_0,
+ 		self::PROTOCOL_1_21_130,
+ 		self::PROTOCOL_1_21_111,
+ 		self::PROTOCOL_1_21_100,
+  	];
 
-	/** Display version shown in the server logs. This should match the version on the game's home screen. */
+	
 	public const MINECRAFT_VERSION = 'v26.20';
-	/** Version sent on the network for client side compatibility checks. This may differ from the display version. */
+	
 	public const MINECRAFT_VERSION_NETWORK = '1.26.20';
 
 	public const LOGIN_PACKET = 0x01;

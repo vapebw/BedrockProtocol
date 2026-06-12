@@ -29,15 +29,25 @@ final class ChainedSubCommandValueRawData{
 
 	public function getType() : int{ return $this->type; }
 
-	public static function read(ByteBufferReader $in) : self{
-		$nameIndex = VarInt::readUnsignedInt($in);
-		$type = VarInt::readUnsignedInt($in);
+	public static function read(ByteBufferReader $in, int $protocolId) : self{
+		if($protocolId >= 898){
+			$nameIndex = VarInt::readUnsignedInt($in);
+			$type = VarInt::readUnsignedInt($in);
+		}else{
+			$nameIndex = LE::readUnsignedShort($in);
+			$type = LE::readUnsignedShort($in);
+		}
 
 		return new self($nameIndex, $type);
 	}
 
-	public function write(ByteBufferWriter $out) : void{
-		VarInt::writeUnsignedInt($out, $this->nameIndex);
-		VarInt::writeUnsignedInt($out, $this->type);
+	public function write(ByteBufferWriter $out, int $protocolId) : void{
+		if($protocolId >= 898){
+			VarInt::writeUnsignedInt($out, $this->nameIndex);
+			VarInt::writeUnsignedInt($out, $this->type);
+		}else{
+			LE::writeUnsignedShort($out, $this->nameIndex);
+			LE::writeUnsignedShort($out, $this->type);
+		}
 	}
 }

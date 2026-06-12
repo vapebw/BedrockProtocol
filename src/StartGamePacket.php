@@ -61,6 +61,7 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 	public UuidInterface $worldTemplateId; //why is this here twice ??? mojang
 	public bool $enableClientSideChunkGeneration;
 	public bool $blockNetworkIdsAreHashes = false; //new in 1.19.80, possibly useful for multi version
+	public bool $enableTickDeathSystems = false;
 	public NetworkPermissions $networkPermissions;
 	public ?ServerJoinInformation $serverJoinInformation;
 	public ServerTelemetryData $serverTelemetryData;
@@ -178,9 +179,17 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		$this->worldTemplateId = CommonTypes::getUUID($in);
 		$this->enableClientSideChunkGeneration = CommonTypes::getBool($in);
 		$this->blockNetworkIdsAreHashes = CommonTypes::getBool($in);
+		if($this->protocolId >= 827 && $this->protocolId <= 860){
+			$this->enableTickDeathSystems = CommonTypes::getBool($in);
+		}
 		$this->networkPermissions = NetworkPermissions::decode($in);
-		$this->serverJoinInformation = CommonTypes::readOptional($in, ServerJoinInformation::read(...));
-		$this->serverTelemetryData = ServerTelemetryData::read($in);
+		if($this->protocolId >= 924){
+			$this->serverJoinInformation = CommonTypes::readOptional($in, ServerJoinInformation::read(...));
+			$this->serverTelemetryData = ServerTelemetryData::read($in);
+		}else{
+			$this->serverJoinInformation = null;
+			$this->serverTelemetryData = new ServerTelemetryData();
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -193,7 +202,7 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		LE::writeFloat($out, $this->pitch);
 		LE::writeFloat($out, $this->yaw);
 
-		$this->levelSettings->write($out);
+		$this->levelSettings->write($out, $this->serverTelemetryData);
 
 		CommonTypes::putString($out, $this->levelId);
 		CommonTypes::putString($out, $this->worldName);
@@ -218,9 +227,14 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		CommonTypes::putUUID($out, $this->worldTemplateId);
 		CommonTypes::putBool($out, $this->enableClientSideChunkGeneration);
 		CommonTypes::putBool($out, $this->blockNetworkIdsAreHashes);
+		if($this->protocolId >= 827 && $this->protocolId <= 860){
+			CommonTypes::putBool($out, $this->enableTickDeathSystems);
+		}
 		$this->networkPermissions->encode($out);
-		CommonTypes::writeOptional($out, $this->serverJoinInformation, fn(ByteBufferWriter $out, ServerJoinInformation $info) => $info->write($out));
-		$this->serverTelemetryData->write($out);
+		if($this->protocolId >= 924){
+			CommonTypes::writeOptional($out, $this->serverJoinInformation, fn(ByteBufferWriter $out, ServerJoinInformation $info) => $info->write($out));
+			$this->serverTelemetryData->write($out);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
